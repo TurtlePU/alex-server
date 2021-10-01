@@ -22,7 +22,7 @@ class ChooseSpreadsheet : View() {
         }
         button(messages["choose.start"]) {
             enableWhen(controller.fileChosen)
-            action { }
+            action { replaceWith(controller.createDashboard()) }
         }
     }
 }
@@ -35,4 +35,8 @@ class ChooseSpreadsheetController : Controller() {
     val fileChosen get() = chosenFile.booleanBinding { it != null }
 
     fun openDialog() = chooseFile(mode = Single, filters = filters).firstOrNull()?.let { chosenFile.value = it }
+
+    fun createDashboard() = Scope()
+        .also { setInScope(DashboardController()) }
+        .let { find<Dashboard>(it) }
 }
