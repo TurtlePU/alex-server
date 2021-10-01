@@ -16,11 +16,17 @@ javafx {
     modules = ['javafx.controls', 'javafx.graphics']
 }
 
+def poi_version = '5.0.0'
+def ktor_version = '1.6.3'
+
 dependencies {
     implementation 'no.tornado:tornadofx:1.7.20'
-    implementation group: 'org.apache.poi', name: 'poi', version: '5.0.0'
-    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '5.0.0'
-    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.5.21'
+    implementation group: 'org.apache.poi', name: 'poi', version: poi_version
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: poi_version
+    implementation "io.ktor:ktor-server-core:$ktor_version"
+    implementation "io.ktor:ktor-server-netty:$ktor_version"
+    implementation "io.ktor:ktor-serialization:$ktor_version"
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.5.31'
 }
 
 test {
