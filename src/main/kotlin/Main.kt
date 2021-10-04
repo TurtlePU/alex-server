@@ -44,7 +44,12 @@ class ChooseSpreadsheetController : Controller() {
         busy.value = true
         return runAsync {
             val scope = Scope()
-            val controller = createDashboardController(chosenFile.value!!)
+            val controller = try {
+                createDashboardController(chosenFile.value!!)
+            } catch (e: Exception) {
+                busy.value = false
+                throw e
+            }
             setInScope(controller, scope)
             find<Dashboard>(scope)
         }
