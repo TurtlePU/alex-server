@@ -1,5 +1,6 @@
 import javafx.concurrent.Task
 import javafx.stage.FileChooser.ExtensionFilter
+import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import tornadofx.*
@@ -57,26 +58,47 @@ class ChooseSpreadsheetController : Controller() {
 }
 
 fun createDashboardController(file: File): DashboardController {
-    return WorkbookFactory.create(FileInputStream(file.path)).use { with(it) {
-        DashboardController(
-            getSheetAt(0)
-                .rowIterator()
-                .asSequence()
-                .drop(2)
-                .mapNotNull { readParticipant() }
-                .toMutableList()
-                .toObservable(),
-            getSheetAt(1)
-                .rowIterator()
-                .asSequence()
-                .mapNotNull { row -> readJury(row) }
-                .toList()
-        )
-    } }
+    return WorkbookFactory.create(FileInputStream(file.path)).use {
+        with(it) {
+            DashboardController(
+                getSheetAt(0)
+                    .rowIterator()
+                    .asSequence()
+                    .drop(2) // header rows
+                    .mapNotNull { row -> readParticipant(row) }
+                    .toMutableList()
+                    .toObservable(),
+                getSheetAt(1)
+                    .rowIterator()
+                    .asSequence()
+                    .mapNotNull { row -> readJury(row) }
+                    .toList()
+            )
+        }
+    }
 }
 
-fun readParticipant(): Participant? = null
+fun readParticipant(row: Row): Participant? {
+    val name = row.getStr(7) ?: return null
+    val category = row.getStr(3) ?: return null
+    val age = row.getInt(11)?.toString() ?: return null
+    val facility = row.getStr(17)
+    return Participant(name, category, age, facility)
+}
 
-fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.ifNotEmpty(::Jury)
+fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()?.let(::Jury)
 
-fun <T> String.ifNotEmpty(f: (String) -> T): T? = if (isNotEmpty()) f(this) else null
+fun Row.getStr(column: Int): String? = getCell(column)?.let {
+    if (it.cellType == CellType.STRING) it.stringCellValue else null
+}
+
+fun Row.getInt(column: Int): Int? = getDouble(column)?.let {
+    val int = it.toInt()
+    if (int.toDouble() == it) int else null
+}
+
+fun Row.getDouble(column: Int): Double? = getCell(column)?.let {
+    if (it.cellType == CellType.NUMERIC) it.numericCellValue else null
+}
+
+fun String.nonEmpty(): String? = ifEmpty { null }

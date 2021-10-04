@@ -10,8 +10,7 @@ class ParticipantForm : View("Add participant") {
             field("Age") { textfield(viewModel.age).required(ValidationTrigger.OnBlur) }
         }
         fieldset("Optional") {
-            field("Facility") { textfield(viewModel.facility) }
-            field("Teacher") { textfield(viewModel.teacher) }
+            field("Residence") { textfield(viewModel.residence) }
         }
         button("Save") {
             enableWhen(viewModel::valid)
@@ -25,11 +24,10 @@ class ParticipantModel(private val save: (Participant) -> Unit) : ViewModel() {
     val name = stringProperty()
     val category = stringProperty()
     val age = stringProperty()
-    val facility = stringProperty()
-    val teacher = stringProperty()
+    val residence = stringProperty()
 
     fun save() {
-        save(Participant(name.value, category.value, age.value, facility.value, teacher.value))
+        save(Participant(name.value, category.value, age.value, residence.value))
     }
 }
 
@@ -37,6 +35,5 @@ data class Participant(
     val name: String,
     val category: String,
     val age: String,
-    val facility: String? = null,
-    val teacher: String? = null,
+    val residence: String? = null,
 )
