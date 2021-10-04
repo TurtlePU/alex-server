@@ -13,14 +13,15 @@ class Dashboard : View("My View") {
 
     override val root = borderpane {
         top = label(controller.serverAddress)
-        center = tableview(controller.participants) {
-            readonlyColumn("Name", Participant::name)
+        center = tableview(controller.performances) {
+            readonlyColumn("Name", Performance::participantName)
+            readonlyColumn("Repertoire", Performance::repertoire)
             for (jury in controller.jury) {
-                column<Participant, Double?>(jury.name) {
+                column<Performance, Double?>(jury.name) {
                     controller.grade(jury, it.value)
                 }
             }
-            column<Participant, Double?>("Total") {
+            column<Performance, Double?>("Total") {
                 controller.total(it.value)
             }
         }
@@ -46,13 +47,13 @@ class Dashboard : View("My View") {
     }
 }
 
-class DashboardController(val participants: ObservableList<Participant>, val jury: List<Jury>) : Controller() {
+class DashboardController(val performances: ObservableList<Performance>, val jury: List<Jury>) : Controller() {
     val serverAddress: String get() = "${InetAddress.getLocalHost().hostName}:$port"
 
     fun participantForm(): View {
         val scope = Scope()
-        setInScope(ParticipantModel(participants::add), scope)
-        return find<ParticipantForm>(scope)
+        setInScope(PerformanceModel(performances::add), scope)
+        return find<PerformanceForm>(scope)
     }
 
     fun previewResults() = find<Results>()
@@ -61,10 +62,10 @@ class DashboardController(val participants: ObservableList<Participant>, val jur
 
     fun stopServer() = runAsync { server.stop(1000, 5000) }
 
-    fun total(participant: Participant) = observables[participant].mean
+    fun total(performance: Performance) = observables[performance].mean
 
-    fun grade(jury: Jury, participant: Participant): ObjectBinding<Double?> =
-        Bindings.valueAt(observables[participant].grades, jury)
+    fun grade(jury: Jury, performance: Performance): ObjectBinding<Double?> =
+        Bindings.valueAt(observables[performance].grades, jury)
 
     private val observables = Observables(jury)
 
@@ -73,8 +74,8 @@ class DashboardController(val participants: ObservableList<Participant>, val jur
 }
 
 class Observables(private val jury: List<Jury>) {
-    operator fun get(participant: Participant): Data {
-        return values.computeIfAbsent(participant) {
+    operator fun get(performance: Performance): Data {
+        return values.computeIfAbsent(performance) {
             val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
             val mean = objectBinding(grades, grades) {
                 val values = values.filterNotNull()
@@ -86,5 +87,5 @@ class Observables(private val jury: List<Jury>) {
 
     class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
 
-    private val values = WeakHashMap<Participant, Data>()
+    private val values = WeakHashMap<Performance, Data>()
 }

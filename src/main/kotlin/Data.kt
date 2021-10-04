@@ -6,3 +6,10 @@ data class Participant(
     val age: String,
     val residence: String? = null,
 )
+
+data class Performance(
+    val participant: Participant,
+    val repertoire: String,
+) {
+    val participantName get() = participant.name
+}

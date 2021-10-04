@@ -65,7 +65,7 @@ fun createDashboardController(file: File): DashboardController {
                     .rowIterator()
                     .asSequence()
                     .drop(2) // header rows
-                    .mapNotNull { row -> readParticipant(row) }
+                    .mapNotNull { row -> readPerformance(row) }
                     .toMutableList()
                     .toObservable(),
                 getSheetAt(1)
@@ -76,6 +76,12 @@ fun createDashboardController(file: File): DashboardController {
             )
         }
     }
+}
+
+fun readPerformance(row: Row): Performance? {
+    val participant = readParticipant(row) ?: return null
+    val repertoire = row.getStr(14) ?: return null
+    return Performance(participant, repertoire)
 }
 
 fun readParticipant(row: Row): Participant? {

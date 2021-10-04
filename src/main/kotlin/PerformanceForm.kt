@@ -2,14 +2,15 @@ import javafx.beans.value.ObservableValue
 import javafx.event.EventTarget
 import tornadofx.*
 
-class ParticipantForm : View("Add participant") {
-    private val viewModel: ParticipantModel by inject()
+class PerformanceForm : View("Add participant") {
+    private val viewModel: PerformanceModel by inject()
 
     override val root = form {
         fieldset("Required") {
             field("Name") { requiredText(viewModel.name) }
             field("Category") { requiredText(viewModel.category) }
             field("Age") { requiredText(viewModel.age) }
+            field("Repertoire") { requiredText(viewModel.repertoire) }
         }
         fieldset("Optional") {
             field("Residence") { textfield(viewModel.residence) }
@@ -29,14 +30,15 @@ class ParticipantForm : View("Add participant") {
     }
 }
 
-class ParticipantModel(private val save: (Participant) -> Unit) : ViewModel() {
+class PerformanceModel(private val save: (Performance) -> Unit) : ViewModel() {
     val name = prop()
     val category = prop()
     val age = prop()
     val residence = prop()
+    val repertoire = prop()
 
     fun save() {
-        save(Participant(name.value!!, category.value!!, age.value!!, residence.value))
+        save(Performance(Participant(name.value!!, category.value!!, age.value!!, residence.value), repertoire.value!!))
     }
 
     private fun prop() = property<String>().fxProperty
