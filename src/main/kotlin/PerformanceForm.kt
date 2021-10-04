@@ -3,26 +3,26 @@ import javafx.event.EventTarget
 import tornadofx.*
 
 class PerformanceForm : View("Add participant") {
-    private val viewModel: Model by inject()
+    private val model: Model by inject()
 
     override val root = form {
         fieldset("Required") {
-            field("Name") { requiredText(viewModel.name) }
-            field("Category") { requiredText(viewModel.category) }
-            field("Age") { requiredText(viewModel.age) }
-            field("Repertoire") { requiredText(viewModel.repertoire) }
+            field("Name") { requiredText(model.name) }
+            field("Category") { requiredText(model.category) }
+            field("Age") { requiredText(model.age) }
+            field("Repertoire") { requiredText(model.repertoire) }
         }
         fieldset("Optional") {
-            field("Residence") { textfield(viewModel.residence) }
+            field("Residence") { textfield(model.residence) }
         }
         button("Save") {
-            enableWhen(viewModel::valid)
+            enableWhen(model::valid)
             action {
-                viewModel.save()
+                model.save()
                 close()
             }
         }
-        viewModel.validate(decorateErrors = false)
+        model.validate(decorateErrors = false)
     }
 
     private fun EventTarget.requiredText(value: ObservableValue<String>) {
