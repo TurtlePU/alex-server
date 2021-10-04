@@ -9,14 +9,16 @@ import java.net.InetAddress
 import java.util.*
 
 class Dashboard : View("My View") {
+    private val model: Model by inject()
+    private val server: Server by inject()
     private val controller: Control by inject()
 
     override val root = borderpane {
-        top = label(controller.serverAddress)
-        center = tableview(controller.performances) {
+        top = label(server.address)
+        center = tableview(model.performances) {
             readonlyColumn("Name", Performance::participantName)
             readonlyColumn("Repertoire", Performance::repertoire)
-            for (jury in controller.jury) {
+            for (jury in model.jury) {
                 column<Performance, Double?>(jury.name) {
                     controller.grade(jury, it.value)
                 }
@@ -36,56 +38,61 @@ class Dashboard : View("My View") {
     }
 
     override fun onDock() {
-        controller.startServer()
-        currentWindow!!.setOnCloseRequest {
-            onUndock()
+        runAsync {
+            server.start()
+            currentWindow!!.setOnCloseRequest {
+                onUndock()
+            }
         }
     }
 
     override fun onUndock() {
-        controller.stopServer()
+        runAsync { server.stop() }
     }
 
-    class Control(val performances: ObservableList<Performance>, val jury: List<Jury>) : Controller() {
-        val serverAddress: String get() = "${InetAddress.getLocalHost().hostName}:$port"
+    class Server(private val port: Int = 8080) : Controller() {
+        val address: String get() = "${InetAddress.getLocalHost().hostName}:$port"
+
+        fun start() = server.start()
+
+        fun stop() = server.stop(1000, 5000)
+
+        private val server = embeddedServer(Netty, port = port) {}
+    }
+
+    class Control : Controller() {
+        private val model: Model by inject()
 
         fun participantForm(): View {
             val scope = Scope()
-            setInScope(PerformanceForm.Model(performances::add), scope)
+            setInScope(PerformanceForm.Model(model.performances::add), scope)
             return find<PerformanceForm>(scope)
         }
 
         fun previewResults() = find<Results>()
 
-        fun startServer() = runAsync { server.start() }
-
-        fun stopServer() = runAsync { server.stop(1000, 5000) }
-
-        fun total(performance: Performance) = observables[performance].mean
+        fun total(performance: Performance) = model.getOrCompute(performance).mean
 
         fun grade(jury: Jury, performance: Performance): ObjectBinding<Double?> =
-            Bindings.valueAt(observables[performance].grades, jury)
+            Bindings.valueAt(model.getOrCompute(performance).grades, jury)
+    }
 
-        private val observables = Observables(jury)
+    class Model(val performances: ObservableList<Performance>, val jury: List<Jury>): ViewModel() {
+        private val grades = WeakHashMap<Performance, Data>()
 
-        private val port = 8080
-        private val server = embeddedServer(Netty, port = port) {}
+        constructor(performances: Sequence<Performance>, jury: Sequence<Jury>) : this(
+            performances.toMutableList().toObservable(), jury.toList()
+        )
 
-        private class Observables(private val jury: List<Jury>) {
-            operator fun get(performance: Performance): Data {
-                return values.computeIfAbsent(performance) {
-                    val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
-                    val mean = objectBinding(grades, grades) {
-                        val values = values.filterNotNull()
-                        if (values.isEmpty()) null else values.sum() / values.size
-                    }
-                    Data(mean, grades)
-                }
+        fun getOrCompute(performance: Performance): Data = grades.computeIfAbsent(performance) {
+            val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
+            val mean = objectBinding(grades, grades) {
+                val values = values.filterNotNull()
+                if (values.isEmpty()) null else values.sum() / values.size
             }
-
-            class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
-
-            private val values = WeakHashMap<Performance, Data>()
+            Data(mean, grades)
         }
+
+        class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
     }
 }

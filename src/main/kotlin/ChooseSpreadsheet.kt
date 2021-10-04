@@ -2,6 +2,7 @@ import javafx.concurrent.Task
 import javafx.stage.FileChooser.ExtensionFilter
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
+import org.apache.poi.ss.usermodel.Workbook
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import tornadofx.*
 import java.io.File
@@ -23,7 +24,7 @@ class ChooseSpreadsheet : View() {
         }
     }
 
-    private class Control : Controller() {
+    class Control : Controller() {
         private val chosenFile = objectProperty<File?>()
         private val filters = arrayOf(ExtensionFilter(messages["choose.spreadsheet"], "*.xls", "*.xlsx"))
         private val busy = booleanProperty(false)
@@ -39,7 +40,7 @@ class ChooseSpreadsheet : View() {
             return runAsync {
                 val scope = Scope()
                 val controller = try {
-                    createDashboardController(chosenFile.value!!)
+                    createDashboardModel(chosenFile.value!!)
                 } catch (e: Exception) {
                     busy.value = false
                     throw e
@@ -50,26 +51,15 @@ class ChooseSpreadsheet : View() {
         }
 
         companion object {
-            fun createDashboardController(file: File): Dashboard.Control {
-                return WorkbookFactory.create(FileInputStream(file.path)).use {
+            fun createDashboardModel(file: File) =
+                WorkbookFactory.create(FileInputStream(file.path)).use {
                     with(it) {
-                        Dashboard.Control(
-                            getSheetAt(0)
-                                .rowIterator()
-                                .asSequence()
-                                .drop(2) // header rows
-                                .mapNotNull { row -> readPerformance(row) }
-                                .toMutableList()
-                                .toObservable(),
-                            getSheetAt(1)
-                                .rowIterator()
-                                .asSequence()
-                                .mapNotNull { row -> readJury(row) }
-                                .toList()
+                        Dashboard.Model(
+                            rows(0).drop(2 /* header rows */).mapNotNull(::readPerformance),
+                            rows(1).mapNotNull(::readJury)
                         )
                     }
                 }
-            }
 
             private fun readPerformance(row: Row): Performance? {
                 val participant = readParticipant(row) ?: return null
@@ -86,6 +76,8 @@ class ChooseSpreadsheet : View() {
             }
 
             private fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()?.let(::Jury)
+
+            private fun Workbook.rows(sheet: Int): Sequence<Row> = getSheetAt(sheet).rowIterator().asSequence()
 
             private fun Row.getStr(column: Int): String? = getCell(column)?.let {
                 if (it.cellType == CellType.STRING) it.stringCellValue else null
