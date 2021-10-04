@@ -88,5 +88,3 @@ class Observables(private val jury: List<Jury>) {
 
     private val values = WeakHashMap<Participant, Data>()
 }
-
-data class Jury(val name: String)

@@ -30,10 +30,3 @@ class ParticipantModel(private val save: (Participant) -> Unit) : ViewModel() {
         save(Participant(name.value, category.value, age.value, residence.value))
     }
 }
-
-data class Participant(
-    val name: String,
-    val category: String,
-    val age: String,
-    val residence: String? = null,
-)
