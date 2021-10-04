@@ -9,7 +9,7 @@ import java.net.InetAddress
 import java.util.*
 
 class Dashboard : View("My View") {
-    private val controller: DashboardController by inject()
+    private val controller: Control by inject()
 
     override val root = borderpane {
         top = label(controller.serverAddress)
@@ -45,47 +45,47 @@ class Dashboard : View("My View") {
     override fun onUndock() {
         controller.stopServer()
     }
-}
 
-class DashboardController(val performances: ObservableList<Performance>, val jury: List<Jury>) : Controller() {
-    val serverAddress: String get() = "${InetAddress.getLocalHost().hostName}:$port"
+    class Control(val performances: ObservableList<Performance>, val jury: List<Jury>) : Controller() {
+        val serverAddress: String get() = "${InetAddress.getLocalHost().hostName}:$port"
 
-    fun participantForm(): View {
-        val scope = Scope()
-        setInScope(PerformanceModel(performances::add), scope)
-        return find<PerformanceForm>(scope)
-    }
+        fun participantForm(): View {
+            val scope = Scope()
+            setInScope(PerformanceForm.Model(performances::add), scope)
+            return find<PerformanceForm>(scope)
+        }
 
-    fun previewResults() = find<Results>()
+        fun previewResults() = find<Results>()
 
-    fun startServer() = runAsync { server.start() }
+        fun startServer() = runAsync { server.start() }
 
-    fun stopServer() = runAsync { server.stop(1000, 5000) }
+        fun stopServer() = runAsync { server.stop(1000, 5000) }
 
-    fun total(performance: Performance) = observables[performance].mean
+        fun total(performance: Performance) = observables[performance].mean
 
-    fun grade(jury: Jury, performance: Performance): ObjectBinding<Double?> =
-        Bindings.valueAt(observables[performance].grades, jury)
+        fun grade(jury: Jury, performance: Performance): ObjectBinding<Double?> =
+            Bindings.valueAt(observables[performance].grades, jury)
 
-    private val observables = Observables(jury)
+        private val observables = Observables(jury)
 
-    private val port = 8080
-    private val server = embeddedServer(Netty, port = port) {}
-}
+        private val port = 8080
+        private val server = embeddedServer(Netty, port = port) {}
 
-class Observables(private val jury: List<Jury>) {
-    operator fun get(performance: Performance): Data {
-        return values.computeIfAbsent(performance) {
-            val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
-            val mean = objectBinding(grades, grades) {
-                val values = values.filterNotNull()
-                if (values.isEmpty()) null else values.sum() / values.size
+        private class Observables(private val jury: List<Jury>) {
+            operator fun get(performance: Performance): Data {
+                return values.computeIfAbsent(performance) {
+                    val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
+                    val mean = objectBinding(grades, grades) {
+                        val values = values.filterNotNull()
+                        if (values.isEmpty()) null else values.sum() / values.size
+                    }
+                    Data(mean, grades)
+                }
             }
-            Data(mean, grades)
+
+            class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
+
+            private val values = WeakHashMap<Performance, Data>()
         }
     }
-
-    class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
-
-    private val values = WeakHashMap<Performance, Data>()
 }
