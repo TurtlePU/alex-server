@@ -50,16 +50,6 @@ class Dashboard : View("My View") {
         runAsync { server.stop() }
     }
 
-    class Server(private val port: Int = 8080) : Controller() {
-        val address: String get() = "${InetAddress.getLocalHost().hostName}:$port"
-
-        fun start() = server.start()
-
-        fun stop() = server.stop(1000, 5000)
-
-        private val server = embeddedServer(Netty, port = port) {}
-    }
-
     class Control : Controller() {
         private val model: Model by inject()
 
