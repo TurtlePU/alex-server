@@ -1,4 +1,8 @@
+import kotlinx.serialization.encodeToString
 import tornadofx.*
+import java.io.File
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 class Dashboard : View("My View") {
     private val model: ContestModel by inject()
@@ -58,7 +62,10 @@ class Dashboard : View("My View") {
     }
 
     override fun onUndock() {
-        runAsync { server.stop() }
+        runAsync {
+            controller.dumpSnapshot()
+            server.stop()
+        }
     }
 
     class Control : Controller() {
@@ -75,5 +82,20 @@ class Dashboard : View("My View") {
         }
 
         fun previewResults() = find<Results>()
+
+        fun dumpSnapshot() {
+            val snapshot = model.snapshot()
+            val str = AlexApp.json.encodeToString(snapshot)
+            File(snapshot.sourcePath).dumpFile().bufferedWriter().use {
+                it.write(str)
+            }
+        }
+
+        companion object {
+            fun File.dumpFile(instant: Instant = Instant.now(), pid: Long = ProcessHandle.current().pid()): File {
+                val timestamp = DateTimeFormatter.ISO_INSTANT.format(instant)
+                return File("$parent/$nameWithoutExtension-$timestamp-$pid.json")
+            }
+        }
     }
 }

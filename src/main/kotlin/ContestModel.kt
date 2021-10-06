@@ -1,10 +1,19 @@
-import javafx.beans.binding.*
+import javafx.beans.binding.Bindings
+import javafx.beans.binding.BooleanBinding
+import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.SimpleObjectProperty
-import javafx.collections.*
-import tornadofx.*
+import javafx.collections.ObservableList
+import javafx.collections.ObservableMap
+import javafx.collections.ObservableSet
+import tornadofx.ViewModel
+import tornadofx.objectBinding
+import tornadofx.onChange
+import tornadofx.toObservable
+import java.io.File
 import java.util.*
 
 class ContestModel(
+    private val source: File,
     private val grades: WeakHashMap<Performance, Data>,
     private val queue: MutableList<Performance>,
     private val enqueued: ObservableSet<Performance>,
@@ -12,13 +21,16 @@ class ContestModel(
     val performances: ObservableList<Performance>,
     val jury: List<Jury>,
 ) : ViewModel() {
+
     constructor(
+        source: File,
         performances: Sequence<Performance>,
         jury: Sequence<Jury>,
-        grades: Sequence<Pair<Performance, Data>> = sequenceOf(),
+        grades: Map<Performance, Map<Jury, Double?>> = mapOf(),
         queue: Sequence<Performance> = sequenceOf(),
     ) : this(
-        WeakHashMap<Performance, Data>().apply { putAll(grades) },
+        source,
+        WeakHashMap<Performance, Data>().apply { putAll(grades.mapValues { Data(it.value) }) },
         queue.toMutableList(),
         queue.toMutableSet().toObservable(),
         WeakHashMap(),
@@ -26,11 +38,23 @@ class ContestModel(
         jury.toList(),
     )
 
+    constructor(snapshot: Snapshot) : this(
+        File(snapshot.sourcePath),
+        snapshot.performances.asSequence(),
+        snapshot.jury.asSequence(),
+        snapshot.grades,
+        snapshot.queue.asSequence()
+    )
+
     init {
         indices.putAll(performances.indexed())
         performances.onChange {
             indices.putAll(it.addedSubList.indexed(it.from))
         }
+    }
+
+    fun snapshot(): Snapshot {
+        return Snapshot(source.path, performances, jury, grades.mapValues { it.value.grades }, queue)
     }
 
     fun enqueue(performance: Performance) {
@@ -48,16 +72,18 @@ class ContestModel(
         Bindings.valueAt(getOrCreate(performance).grades, jury)
 
     private fun getOrCreate(performance: Performance): Data = grades.computeIfAbsent(performance) {
-        val grades = jury.associateWith<Jury, Double?> { null }.toObservable()
-        val mean = objectBinding(grades, grades) {
-            val values = values.filterNotNull()
-            if (values.isEmpty()) null else values.sum() / values.size
-        }
-        Data(mean, grades)
+        Data(jury.associateWith<Jury, Double?> { null }.toObservable())
     }
 
     companion object {
-        class Data(val mean: ObjectBinding<Double?>, val grades: ObservableMap<Jury, Double?>)
+        class Data(val grades: ObservableMap<Jury, Double?>, val mean: ObjectBinding<Double?>) {
+            constructor(grades: ObservableMap<Jury, Double?>) : this(grades, objectBinding(grades, grades) {
+                val values = values.filterNotNull()
+                if (values.isEmpty()) null else values.sum() / values.size
+            })
+
+            constructor(grades: Map<Jury, Double?>) : this(grades.toObservable())
+        }
 
         private fun <T> Iterable<T>.indexed(from: Int = 0) = withIndex().map { (i, x) -> x to i + from }
     }

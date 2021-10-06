@@ -1,5 +1,6 @@
 import javafx.concurrent.Task
 import javafx.stage.FileChooser.ExtensionFilter
+import kotlinx.serialization.decodeFromString
 import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.ss.usermodel.Workbook
@@ -26,8 +27,11 @@ class ChooseSpreadsheet : View() {
 
     class Control : Controller() {
         private val chosenFile = objectProperty<File?>()
-        private val filters = arrayOf(ExtensionFilter(messages["choose.spreadsheet"], "*.xls", "*.xlsx"))
         private val busy = booleanProperty(false)
+        private val filters = arrayOf(
+            ExtensionFilter(messages["choose.spreadsheet"], "*.xls", "*.xlsx"),
+            ExtensionFilter("JSON cache", "*.json"),
+        )
 
         val fileName get() = chosenFile.stringBinding { it?.name }
         val enableTransition get() = chosenFile.booleanBinding(busy) { it != null && !busy.value }
@@ -51,15 +55,23 @@ class ChooseSpreadsheet : View() {
         }
 
         companion object {
-            fun createDashboardModel(file: File) =
-                WorkbookFactory.create(FileInputStream(file.path)).use {
-                    with(it) {
-                        ContestModel(
-                            rows(0).drop(2 /* header rows */).mapNotNull(::readPerformance),
-                            rows(1).mapNotNull(::readJury)
-                        )
+            fun createDashboardModel(file: File): ContestModel {
+                return if (file.extension == "json") {
+                    file.bufferedReader().use {
+                        ContestModel(AlexApp.json.decodeFromString(it.readText()))
+                    }
+                } else {
+                    WorkbookFactory.create(FileInputStream(file.path)).use {
+                        with(it) {
+                            ContestModel(
+                                file,
+                                rows(0).drop(2 /* header rows */).mapNotNull(::readPerformance),
+                                rows(1).mapNotNull(::readJury)
+                            )
+                        }
                     }
                 }
+            }
 
             private fun readPerformance(row: Row): Performance? {
                 val participant = readParticipant(row) ?: return null
