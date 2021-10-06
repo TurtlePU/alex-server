@@ -6,24 +6,43 @@ class Dashboard : View("My View") {
     private val controller: Control by inject()
 
     override val root = borderpane {
-        top = label(server.address)
+        top = borderpane {
+            center = label("Server is running at ${server.address}")
+        }
         center = tableview(model.performances) {
+            column<Performance, Int>("№") {
+                model.indexOf(it.value)
+            }
             readonlyColumn("Name", Performance::participantName)
             readonlyColumn("Repertoire", Performance::repertoire)
             for (jury in model.jury) {
                 column<Performance, Double?>(jury.name) {
-                    controller.grade(jury, it.value)
+                    model.viewGrade(jury, it.value)
                 }
             }
             column<Performance, Double?>("Total") {
-                controller.total(it.value)
+                model.countTotal(it.value)
             }
+            column<Performance, Boolean>("Enqueued") {
+                model.isEnqueued(it.value)
+            }.cellFormat {
+                if (it) {
+                    text = "YES"
+                    tableRow?.removeClass(Style.dequeued)
+                    tableRow?.addClass(Style.enqueued)
+                } else {
+                    text = "NO"
+                    tableRow?.removeClass(Style.enqueued)
+                    tableRow?.addClass(Style.dequeued)
+                }
+            }
+            onDoubleClick { controller.enqueueSelection(selectedItem!!) }
         }
-        bottom = hbox {
-            button("+") {
+        bottom = borderpane {
+            left = button("+") {
                 action { openInternalWindow(controller.participantForm()) }
             }
-            button(messages["preview.results"]) {
+            center = button(messages["preview.results"]) {
                 action { openInternalWindow(controller.previewResults()) }
             }
         }
