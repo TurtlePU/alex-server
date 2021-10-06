@@ -4,7 +4,7 @@ fun main(args: Array<String>) {
     launch<AlexApp>(args)
 }
 
-class AlexApp : App(ChooseSpreadsheet::class)
+class AlexApp : App(ChooseSpreadsheet::class, Style::class)
 
 data class Jury(val name: String)
 
