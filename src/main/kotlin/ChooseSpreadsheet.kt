@@ -54,7 +54,7 @@ class ChooseSpreadsheet : View() {
             fun createDashboardModel(file: File) =
                 WorkbookFactory.create(FileInputStream(file.path)).use {
                     with(it) {
-                        Dashboard.Model(
+                        ContestModel(
                             rows(0).drop(2 /* header rows */).mapNotNull(::readPerformance),
                             rows(1).mapNotNull(::readJury)
                         )
