@@ -1,0 +1,12 @@
+plugins {
+    id 'alex-server.kotlin-conventions'
+    id 'java-library'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+}
