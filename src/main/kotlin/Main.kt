@@ -19,6 +19,9 @@ class AlexApp : App(ChooseSpreadsheet::class, Style::class) {
 data class Jury(val name: String)
 
 @Serializable
+data class JuryToken(val value: String)
+
+@Serializable
 data class Participant(
     val name: String,
     val category: String,
@@ -42,4 +45,5 @@ data class Snapshot(
     val jury: List<Jury>,
     val grades: Map<Performance, Map<Jury, Double?>>,
     val queue: List<Performance>,
+    val juryTokens: Map<Jury, JuryToken>,
 )
