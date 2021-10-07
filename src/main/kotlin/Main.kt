@@ -24,6 +24,7 @@ data class Participant(
     val category: String,
     val age: String,
     val residence: String? = null,
+    val teacher: String? = null,
 )
 
 @Serializable

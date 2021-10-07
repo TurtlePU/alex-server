@@ -83,8 +83,9 @@ class ChooseSpreadsheet : View() {
                 val name = row.getStr(7) ?: return null
                 val category = row.getStr(3) ?: return null
                 val age = row.getInt(11)?.toString() ?: return null
-                val facility = row.getStr(17)
-                return Participant(name, category, age, facility)
+                val residence = row.getStr(17)
+                val teacher = row.getStr(17)
+                return Participant(name, category, age, residence, teacher)
             }
 
             private fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()?.let(::Jury)
