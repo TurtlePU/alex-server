@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
 import javafx.collections.ObservableSet
+import kotlinx.serialization.Serializable
 import tornadofx.ViewModel
 import tornadofx.objectBinding
 import tornadofx.onChange
@@ -101,6 +102,16 @@ class ContestModel(
     }
 
     companion object {
+        @Serializable
+        data class Snapshot(
+            val sourcePath: String,
+            val performances: List<Performance>,
+            val jury: List<Jury>,
+            val grades: Map<Performance, Map<Jury, Double?>>,
+            val queue: List<Performance>,
+            val juryTokens: Map<Jury, JuryToken>,
+        )
+
         class PerfGrade(val grades: ObservableMap<Jury, Double?>, val mean: ObjectBinding<Double?>) {
             constructor(grades: ObservableMap<Jury, Double?>) : this(grades, objectBinding(grades, grades) {
                 val values = values.filterNotNull()

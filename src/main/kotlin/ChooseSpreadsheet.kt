@@ -58,7 +58,7 @@ class ChooseSpreadsheet : View() {
             fun createDashboardModel(file: File): ContestModel {
                 return if (file.extension == "json") {
                     file.bufferedReader().use {
-                        ContestModel(AlexApp.json.decodeFromString(it.readText()))
+                        ContestModel(Protocol.json.decodeFromString(it.readText()))
                     }
                 } else {
                     WorkbookFactory.create(FileInputStream(file.path)).use {

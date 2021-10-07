@@ -85,7 +85,7 @@ class Dashboard : View("My View") {
 
         fun dumpSnapshot() {
             val snapshot = model.snapshot()
-            val str = AlexApp.json.encodeToString(snapshot)
+            val str = Protocol.json.encodeToString(snapshot)
             File(snapshot.sourcePath).dumpFile().bufferedWriter().use {
                 it.write(str)
             }

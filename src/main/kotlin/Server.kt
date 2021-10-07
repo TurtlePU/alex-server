@@ -14,7 +14,6 @@ import io.ktor.routing.*
 import io.ktor.serialization.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import kotlinx.serialization.Serializable
 import tornadofx.Controller
 import java.net.InetAddress
 
@@ -29,7 +28,7 @@ class Server(private val port: Int = 8080) : Controller() {
 
     private val server = embeddedServer(Netty, port = port) {
         install(ContentNegotiation) {
-            json(AlexApp.json)
+            json(Protocol.json)
         }
         routing {
             post("/auth") {
@@ -58,13 +57,5 @@ class Server(private val port: Int = 8080) : Controller() {
                 }
             }
         }
-    }
-
-    companion object {
-        @Serializable
-        data class PostAuth(val jury: Jury, val token: JuryToken)
-
-        @Serializable
-        data class PostGrade(val jury: Jury, val token: JuryToken, val performance: Performance, val grade: Double)
     }
 }
