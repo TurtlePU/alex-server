@@ -14,7 +14,7 @@ import java.util.*
 
 class ContestModel(
     private val source: File,
-    private val grades: WeakHashMap<Performance, Data>,
+    private val grades: WeakHashMap<Performance, PerfGrade>,
     private val queue: MutableList<Performance>,
     private val enqueued: ObservableSet<Performance>,
     private val indices: WeakHashMap<Performance, Int>,
@@ -30,7 +30,7 @@ class ContestModel(
         queue: Sequence<Performance> = sequenceOf(),
     ) : this(
         source,
-        WeakHashMap<Performance, Data>().apply { putAll(grades.mapValues { Data(it.value) }) },
+        WeakHashMap<Performance, PerfGrade>().apply { putAll(grades.mapValues { PerfGrade(it.value) }) },
         queue.toMutableList(),
         queue.toMutableSet().toObservable(),
         WeakHashMap(),
@@ -71,12 +71,12 @@ class ContestModel(
     fun viewGrade(jury: Jury, performance: Performance): ObjectBinding<Double?> =
         Bindings.valueAt(getOrCreate(performance).grades, jury)
 
-    private fun getOrCreate(performance: Performance): Data = grades.computeIfAbsent(performance) {
-        Data(jury.associateWith<Jury, Double?> { null }.toObservable())
+    private fun getOrCreate(performance: Performance): PerfGrade = grades.computeIfAbsent(performance) {
+        PerfGrade(jury.associateWith<Jury, Double?> { null }.toObservable())
     }
 
     companion object {
-        class Data(val grades: ObservableMap<Jury, Double?>, val mean: ObjectBinding<Double?>) {
+        class PerfGrade(val grades: ObservableMap<Jury, Double?>, val mean: ObjectBinding<Double?>) {
             constructor(grades: ObservableMap<Jury, Double?>) : this(grades, objectBinding(grades, grades) {
                 val values = values.filterNotNull()
                 if (values.isEmpty()) null else values.sum() / values.size
