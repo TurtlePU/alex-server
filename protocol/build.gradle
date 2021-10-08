@@ -1,12 +1,10 @@
 plugins {
+    id 'org.jetbrains.kotlin.jvm'
     id 'alex-server.kotlin-conventions'
     id 'java-library'
 }
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib"
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }

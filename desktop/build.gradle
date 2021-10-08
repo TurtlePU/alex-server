@@ -1,6 +1,7 @@
 plugins {
-    id 'alex-server.kotlin-conventions'
     id 'application'
+    id 'org.jetbrains.kotlin.jvm'
+    id 'alex-server.kotlin-conventions'
     id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
@@ -10,7 +11,7 @@ javafx {
 }
 
 def poi_version = '5.0.0'
-def ktor_version = '1.6.3'
+def ktor_version = '1.6.4'
 
 dependencies {
     implementation project(':protocol')
@@ -28,4 +29,9 @@ compileKotlin {
 
 compileTestKotlin {
     kotlinOptions.jvmTarget = '1.8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
