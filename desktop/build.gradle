@@ -1,0 +1,48 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.9'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.0'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.5.31'
+}
+
+group = 'me.turtle'
+version = '1.0-SNAPSHOT'
+mainClassName = 'MainKt'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
+
+javafx {
+    version = "11.0.2"
+    modules = ['javafx.controls', 'javafx.graphics']
+}
+
+def poi_version = '5.0.0'
+def ktor_version = '1.6.4'
+
+dependencies {
+    implementation 'no.tornado:tornadofx:2.0.0-SNAPSHOT'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core:1.3.1'
+    implementation group: 'org.apache.poi', name: 'poi', version: poi_version
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: poi_version
+    implementation "io.ktor:ktor-server-core:$ktor_version"
+    implementation "io.ktor:ktor-server-netty:$ktor_version"
+    implementation "io.ktor:ktor-serialization:$ktor_version"
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit:1.6.0'
+}
+
+test {
+    useJUnit()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
