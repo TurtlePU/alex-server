@@ -20,7 +20,7 @@ class Dashboard : View("My View") {
             readonlyColumn("Name", Performance::participantName)
             readonlyColumn("Repertoire", Performance::repertoire)
             for (jury in model.jury) {
-                column<Performance, Double?>(jury.name) {
+                column<Performance, Double?>(jury) {
                     model.viewGrade(jury, it.value)
                 }
             }

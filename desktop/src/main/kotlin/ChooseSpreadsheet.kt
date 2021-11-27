@@ -88,7 +88,7 @@ class ChooseSpreadsheet : View() {
                 return Participant(name, category, age, residence, teacher)
             }
 
-            private fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()?.let(::Jury)
+            private fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()
 
             private fun Workbook.rows(sheet: Int): Sequence<Row> = getSheetAt(sheet).rowIterator().asSequence()
 

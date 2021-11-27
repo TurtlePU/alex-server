@@ -7,11 +7,9 @@ object Protocol {
     }
 }
 
-@Serializable
-data class Jury(val name: String)
+typealias Jury = String
 
-@Serializable
-data class JuryToken(val value: String)
+typealias JuryToken = String
 
 @Serializable
 data class Participant(
@@ -34,4 +32,10 @@ data class Performance(
 data class PostAuth(val jury: Jury, val token: JuryToken)
 
 @Serializable
-data class PostGrade(val jury: Jury, val token: JuryToken, val performance: Performance, val grade: Double)
+data class PostGrade(
+    val jury: Jury,
+    val token: JuryToken,
+    val performance: Performance,
+    val grade: Double,
+    val comment: String?,
+)
