@@ -42,7 +42,8 @@ class Server(private val port: Int = 8080) : Controller() {
             }
 
             get("/queue") {
-                call.respond(model.queue)
+                val since = call.receive<Int>()
+                call.respond(model.queue.drop(since))
             }
 
             post("/grade") {
