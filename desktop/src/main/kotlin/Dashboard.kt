@@ -79,7 +79,11 @@ class Dashboard : View("My View") {
             return find<PerformanceForm>(scope)
         }
 
-        fun previewResults() = find<Results>()
+        fun previewResults(): View {
+            val scope = Scope()
+            setInScope(Results.Model(model.leaderboard()), scope)
+            return find<Results>(scope)
+        }
 
         fun dumpSnapshot() {
             val snapshot = model.snapshot()

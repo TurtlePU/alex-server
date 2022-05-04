@@ -53,6 +53,12 @@ class ContestModel(
         jurySet.addAll(jury)
     }
 
+    fun leaderboard(): List<Pair<Performance, Double>> {
+        return grades
+            .mapNotNull { (performance, grades) -> grades.mean.value?.let { performance to it } }
+            .sortedByDescending { it.second }
+    }
+
     fun snapshot(): Snapshot {
         return Snapshot(source.path, performances, jury, grades.mapValues { it.value.grades }, queue, juryTokens)
     }
