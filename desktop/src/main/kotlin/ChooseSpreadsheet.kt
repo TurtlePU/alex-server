@@ -16,9 +16,9 @@ class ChooseSpreadsheet : View() {
     override val root = vbox {
         hbox {
             button(messages["choose.file"]) {
-                action(controller::openDialog)
+                action(controller::openSpreadSheetPicker)
             }
-            label(controller.fileName)
+            label(controller.spreadSheetName)
         }
         button(messages["choose.start"]) {
             enableWhen(controller.enableTransition)
@@ -27,25 +27,27 @@ class ChooseSpreadsheet : View() {
     }
 
     class Control : Controller() {
-        private val chosenFile = objectProperty<File?>()
         private val busy = booleanProperty(false)
-        private val filters = arrayOf(
+        val enableTransition get() = busy.booleanBinding(chosenSpreadSheet) { !it!! && chosenSpreadSheet.value != null }
+
+        private val chosenSpreadSheet = objectProperty<File?>()
+        private val spreadSheetFilters = arrayOf(
             ExtensionFilter(messages["choose.spreadsheet"], "*.xls", "*.xlsx"),
             ExtensionFilter("JSON cache", "*.json"),
         )
+        val spreadSheetName get() = chosenSpreadSheet.stringBinding { it?.name }
 
-        val fileName get() = chosenFile.stringBinding { it?.name }
-        val enableTransition get() = chosenFile.booleanBinding(busy) { it != null && !busy.value }
-
-        fun openDialog() =
-            chooseFile(mode = FileChooserMode.Single, filters = filters).firstOrNull()?.let { chosenFile.value = it }
+        fun openSpreadSheetPicker() =
+            chooseFile(mode = FileChooserMode.Single, filters = spreadSheetFilters)
+                .firstOrNull()
+                ?.let { chosenSpreadSheet.value = it }
 
         fun createDashboard(): Task<View> {
             busy.value = true
             return runAsync {
                 val scope = Scope()
                 val contestModel = try {
-                    createDashboardModel(chosenFile.value!!)
+                    createDashboardModel(chosenSpreadSheet.value!!)
                 } catch (e: Exception) {
                     busy.value = false
                     throw e
