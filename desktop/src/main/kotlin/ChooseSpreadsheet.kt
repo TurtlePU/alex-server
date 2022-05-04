@@ -44,13 +44,13 @@ class ChooseSpreadsheet : View() {
             busy.value = true
             return runAsync {
                 val scope = Scope()
-                val controller = try {
+                val contestModel = try {
                     createDashboardModel(chosenFile.value!!)
                 } catch (e: Exception) {
                     busy.value = false
                     throw e
                 }
-                setInScope(controller, scope)
+                setInScope(contestModel, scope)
                 find<Dashboard>(scope)
             }
         }
