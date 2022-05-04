@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory
 import tornadofx.*
 import java.io.File
 import java.io.FileInputStream
+import java.util.regex.Pattern
 
 class ChooseSpreadsheet : View() {
     private val controller: Control by inject()
@@ -65,8 +66,8 @@ class ChooseSpreadsheet : View() {
                         with(it) {
                             ContestModel(
                                 file,
-                                rows(0).drop(2 /* header rows */).mapNotNull(::readPerformance),
-                                rows(1).mapNotNull(::readJury)
+                                rows(0).drop(3 /* header rows */).mapNotNull(::readPerformance),
+                                rows(1).drop(1 /* header rows */).mapNotNull(::readJury)
                             )
                         }
                     }
@@ -74,21 +75,25 @@ class ChooseSpreadsheet : View() {
             }
 
             private fun readPerformance(row: Row): Performance? {
+                val id = row.getInt(6) ?: return null
                 val participant = readParticipant(row) ?: return null
-                val repertoire = row.getStr(14) ?: return null
-                return Performance(participant, repertoire)
+                val repertoire = row.getStr(11) ?: return null
+                return Performance(id, participant, repertoire)
             }
 
             private fun readParticipant(row: Row): Participant? {
-                val name = row.getStr(7) ?: return null
-                val category = row.getStr(3) ?: return null
-                val age = row.getInt(11)?.toString() ?: return null
-                val residence = row.getStr(17)
-                val teacher = row.getStr(17)
+                val name = row.getStr(10) ?: return null
+                val category = row.getStr(7) ?: return null
+                val age = row.getStr(8) ?: return null
+                val residence = row.getStr(20)
+                val teacher = row.getStr(20)
                 return Participant(name, category, age, residence, teacher)
             }
 
-            private fun readJury(row: Row): Jury? = row.cellIterator().next().stringCellValue?.nonEmpty()
+            private fun readJury(row: Row): Jury? {
+                val raw = row.cellIterator().next().stringCellValue?.nonEmpty() ?: return null
+                return raw.split(Pattern.compile("\\s")).joinToString(" ") { it.trim() }
+            }
 
             private fun Workbook.rows(sheet: Int): Sequence<Row> = getSheetAt(sheet).rowIterator().asSequence()
 

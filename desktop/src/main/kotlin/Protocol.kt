@@ -22,6 +22,7 @@ data class Participant(
 
 @Serializable
 data class Performance(
+    val id: Int,
     val participant: Participant,
     val repertoire: String,
 ) {
@@ -30,6 +31,9 @@ data class Performance(
 
 @Serializable
 data class PostAuth(val jury: Jury, val token: JuryToken)
+
+@Serializable
+data class GetQueue(val since: Int)
 
 @Serializable
 data class PostGrade(

@@ -14,11 +14,23 @@ import io.ktor.routing.*
 import io.ktor.serialization.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import org.slf4j.event.Level
 import tornadofx.Controller
-import java.net.InetAddress
+import java.net.NetworkInterface
 
 class Server(private val port: Int = 8080) : Controller() {
-    val address: String get() = "${InetAddress.getLocalHost().hostName}:$port"
+    val address: String get() = "$ip:$port"
+
+    private val ip: String get() {
+        for (iface in NetworkInterface.networkInterfaces()) {
+            for (addr in iface.inetAddresses()) {
+                if (!addr.isLoopbackAddress && addr.hostAddress.find { it == ':' } == null) {
+                    return addr.hostAddress
+                }
+            }
+        }
+        return ""
+    }
 
     fun start() = server.start()
 
@@ -30,8 +42,12 @@ class Server(private val port: Int = 8080) : Controller() {
         install(ContentNegotiation) {
             json(Protocol.json)
         }
+        install(CallLogging) {
+            level = Level.INFO
+        }
         routing {
             post("/auth") {
+                println(call.request)
                 val (jury, token) = call.receive<PostAuth>()
                 when (model.authorize(jury, token)) {
                     NEW_TOKEN -> call.respond(Created, "Added token to jury\r\n")
@@ -42,8 +58,8 @@ class Server(private val port: Int = 8080) : Controller() {
             }
 
             get("/queue") {
-                val since = call.receive<Int>()
-                call.respond(model.queue.drop(since))
+                val since = call.receive<GetQueue>()
+                call.respond(model.queue.drop(since.since))
             }
 
             post("/grade") {

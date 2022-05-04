@@ -1,14 +1,12 @@
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.BooleanBinding
 import javafx.beans.binding.ObjectBinding
-import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
 import javafx.collections.ObservableSet
 import kotlinx.serialization.Serializable
 import tornadofx.ViewModel
 import tornadofx.objectBinding
-import tornadofx.onChange
 import tornadofx.toObservable
 import java.io.File
 import java.util.*
@@ -17,7 +15,6 @@ class ContestModel(
     private val source: File,
     private val grades: WeakHashMap<Performance, PerfGrade>,
     private val enqueued: ObservableSet<Performance>,
-    private val indices: WeakHashMap<Performance, Int>,
     private val juryTokens: MutableMap<Jury, JuryToken>,
     private val jurySet: MutableSet<Jury>,
     val queue: MutableList<Performance>,
@@ -36,7 +33,6 @@ class ContestModel(
         source,
         WeakHashMap<Performance, PerfGrade>().apply { putAll(grades.mapValues { PerfGrade(it.value) }) },
         queue.toMutableSet().toObservable(),
-        WeakHashMap(),
         juryTokens.toMutableMap(),
         mutableSetOf<Jury>(),
         queue.toMutableList(),
@@ -54,15 +50,16 @@ class ContestModel(
     )
 
     init {
-        indices.putAll(performances.indexed())
-        performances.onChange {
-            indices.putAll(it.addedSubList.indexed(it.from))
-        }
         jurySet.addAll(jury)
     }
 
     fun snapshot(): Snapshot {
         return Snapshot(source.path, performances, jury, grades.mapValues { it.value.grades }, queue, juryTokens)
+    }
+
+    fun addSorted(performance: Performance) {
+        val index = -performances.binarySearch { it.id - performance.id } - 1
+        performances.add(index, performance)
     }
 
     fun enqueue(performance: Performance) {
@@ -71,8 +68,6 @@ class ContestModel(
 
     fun isEnqueued(performance: Performance): BooleanBinding =
         Bindings.createBooleanBinding({ enqueued.contains(performance) }, enqueued)
-
-    fun indexOf(performance: Performance) = SimpleObjectProperty(indices[performance]!! + 1)
 
     fun countTotal(performance: Performance) = getOrCreate(performance).mean
 
@@ -124,7 +119,5 @@ class ContestModel(
         enum class AuthResult { NEW_TOKEN, LOGIN_OK, LOGIN_FAIL, UNKNOWN_JURY }
 
         enum class GradeResult { GRADE_OK, UNKNOWN_PERFORMANCE }
-
-        private fun <T> Iterable<T>.indexed(from: Int = 0) = withIndex().map { (i, x) -> x to i + from }
     }
 }

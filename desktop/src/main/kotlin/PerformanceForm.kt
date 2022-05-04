@@ -7,6 +7,7 @@ class PerformanceForm : View("Add participant") {
 
     override val root = form {
         fieldset("Required") {
+            field("Id") { requiredText(model.id) }
             field("Name") { requiredText(model.name) }
             field("Category") { requiredText(model.category) }
             field("Age") { requiredText(model.age) }
@@ -30,6 +31,7 @@ class PerformanceForm : View("Add participant") {
     }
 
     class Model(private val save: (Performance) -> Unit) : ViewModel() {
+        val id = prop()
         val name = prop()
         val category = prop()
         val age = prop()
@@ -39,6 +41,7 @@ class PerformanceForm : View("Add participant") {
         fun save() {
             save(
                 Performance(
+                    id.value!!.toInt(),
                     Participant(name.value!!, category.value!!, age.value!!, residence.value),
                     repertoire.value!!
                 )

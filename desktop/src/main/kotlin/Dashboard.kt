@@ -14,9 +14,7 @@ class Dashboard : View("My View") {
             center = label("Server is running at ${server.address}")
         }
         center = tableview(model.performances) {
-            column<Performance, Int>("№") {
-                model.indexOf(it.value)
-            }
+            readonlyColumn("№", Performance::id)
             readonlyColumn("Name", Performance::participantName)
             readonlyColumn("Repertoire", Performance::repertoire)
             for (jury in model.jury) {
@@ -77,7 +75,7 @@ class Dashboard : View("My View") {
 
         fun participantForm(): View {
             val scope = Scope()
-            setInScope(PerformanceForm.Model(model.performances::add), scope)
+            setInScope(PerformanceForm.Model(model::addSorted), scope)
             return find<PerformanceForm>(scope)
         }
 
