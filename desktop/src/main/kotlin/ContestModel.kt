@@ -12,7 +12,7 @@ import java.io.File
 import java.util.*
 
 class ContestModel(
-    private val source: File,
+    val source: File,
     private val grades: WeakHashMap<Performance, PerfGrade>,
     private val enqueued: ObservableSet<Performance>,
     private val juryTokens: MutableMap<Jury, JuryToken>,

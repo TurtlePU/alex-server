@@ -81,7 +81,7 @@ class Dashboard : View("My View") {
 
         fun previewResults(): View {
             val scope = Scope()
-            setInScope(Results.Model(model.leaderboard()), scope)
+            setInScope(Results.Model(model.leaderboard(), model.source), scope)
             return find<Results>(scope)
         }
 
