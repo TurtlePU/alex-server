@@ -4,6 +4,7 @@ import javafx.collections.ObservableSet
 import javafx.scene.control.TableCell
 import javafx.stage.FileChooser.ExtensionFilter
 import org.apache.poi.xwpf.usermodel.XWPFDocument
+import org.apache.poi.xwpf.usermodel.XWPFParagraph
 import tornadofx.*
 import java.io.File
 import java.io.FileInputStream
@@ -39,7 +40,7 @@ class Results : View("Results") {
         val leaderboard: List<PerformanceResult>,
         private val sourceFile: File,
         private val printed: ObservableSet<PerformanceResult> = mutableSetOf<PerformanceResult>().toObservable(),
-        private var chosenTemplate: XWPFDocument? = null,
+        private var chosenTemplate: Document? = null,
     ) : ViewModel() {
         private val filters = arrayOf(ExtensionFilter("Text document", "*.doc", "*.docx"))
 
@@ -55,10 +56,8 @@ class Results : View("Results") {
             printed.add(item)
         }
 
-        private fun pickTemplate(): XWPFDocument? =
-            chooseFile(mode = FileChooserMode.Single, filters = filters)
-                .firstOrNull()
-                ?.let { XWPFDocument(FileInputStream(it.absolutePath)) }
+        private fun pickTemplate(): Document? =
+            chooseFile(mode = FileChooserMode.Single, filters = filters).firstOrNull()?.let(::Document)
 
         private fun whereToSave(item: PerformanceResult): File? =
             chooseFile(
@@ -69,10 +68,6 @@ class Results : View("Results") {
             ).firstOrNull()
 
         companion object {
-            private fun XWPFDocument.fillWith(result: PerformanceResult): XWPFDocument {
-                TODO()
-            }
-
             private val PerformanceResult.diplomaFileName: String get() = "$participant.$repertoire.docx"
         }
     }
@@ -80,5 +75,29 @@ class Results : View("Results") {
     data class PerformanceResult(val performance: Performance, val total: Double) {
         val participant: String get() = performance.participantName
         val repertoire: String get() = performance.repertoire
+    }
+
+    class Document(file: File) : XWPFDocument(FileInputStream(file)) {
+        private val participantParagraph = find { true }
+        private val repertoireParagraph = find { true }
+        private val degreeParagraph = find { true }
+
+        fun fillWith(result: PerformanceResult): XWPFDocument {
+            with(participantParagraph.createRun()) {
+                setText(result.participant)
+            }
+            with(repertoireParagraph.createRun()) {
+                setText(result.repertoire)
+            }
+            with(degreeParagraph.createRun()) {
+                setText("TODO")
+            }
+            return this
+        }
+
+        companion object {
+            private fun XWPFDocument.find(pred: XWPFParagraph.() -> Boolean): XWPFParagraph =
+                paragraphs.find(pred) ?: createParagraph()
+        }
     }
 }
